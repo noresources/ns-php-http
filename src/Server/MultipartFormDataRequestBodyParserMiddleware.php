@@ -32,10 +32,76 @@ class MultipartFormDataRequestBodyParserMiddleware implements
 	MiddlewareInterface
 {
 
-	const EOL = "\r\n";
+	/**
+	 * Field names with square bracket syntax processing
+	 *
+	 * @var string
+	 */
+	const INDEXED_FIELD_NAME = 'index';
 
-	const EOL_LENGTH = 2;
+	/**
+	 * Process field names with square brackets like PHP do.
+	 *
+	 * This is the default behavior.
+	 *
+	 * @var integer
+	 */
+	const INDEXED_FIELD_NAME_PHP = 0;
 
+	/**
+	 * Do not process field names with trailing square brackets
+	 *
+	 * @var integer
+	 */
+	const INDEXED_FIELD_NAME_IGNORE = 1;
+
+	const DUPLICATED_FIELD_NAME = 'duplicate';
+
+	const DUPLICATED_FIELD_NAME_OVERRIDE = 0;
+
+	const DUPLICATED_FIELD_NAME_ARRAY = 1;
+
+	public function __construct()
+	{
+		$this->options = [];
+	}
+
+	/**
+	 *
+	 * @return array
+	 */
+	public function getOptions()
+	{
+		return $this->options;
+	}
+
+	/**
+	 *
+	 * @param string $key
+	 * @param mixed $value
+	 * @return $this
+	 */
+	public function setOption($key, $value)
+	{
+		Container::setValue($this->options, $key, $value);
+		return $this;
+	}
+
+	/**
+	 *
+	 * @param string $key
+	 * @return mixed
+	 */
+	public function getOption($key)
+	{
+		return Container::keyValue($this->options, $key, 0);
+	}
+
+	/**
+	 *
+	 * {@inheritdoc}
+	 * @see \Psr\Http\Server\MiddlewareInterface::process()
+	 */
 	public function process(ServerRequestInterface $request,
 		RequestHandlerInterface $handler): ResponseInterface
 	{
@@ -86,8 +152,8 @@ class MultipartFormDataRequestBodyParserMiddleware implements
 				]);
 			$headers = new HeaderFieldMap($parser->parse($stream));
 
-			self::processPart($fields, $files, $headers, $stream,
-				$boundary);
+			$this->processPart($fields, $files, $headers, $stream,
+				$boundary, $this->options);
 		} // eof
 
 		return $handler->handle(
@@ -95,7 +161,7 @@ class MultipartFormDataRequestBodyParserMiddleware implements
 				->withParsedBody($fields));
 	}
 
-	private static function processPart(&$fields, &$files,
+	private function processPart(&$fields, &$files,
 		HeaderFieldMap $headers, StreamInterface $stream, $boundary)
 	{
 		$disposition = Container::keyValue($headers,
@@ -104,19 +170,36 @@ class MultipartFormDataRequestBodyParserMiddleware implements
 		if ($disposition instanceof ContentDispositionHeaderValue)
 		{
 			if ($disposition->getParameters()->offsetExists('filename'))
-				return self::processFilePart($files, $headers, $stream,
+				return $this->processFilePart($files, $headers, $stream,
 					$boundary, $disposition);
 			else
-				return self::processFormData($fields, $headers, $stream,
+				return $this->processFormData($fields, $headers, $stream,
 					$boundary, $disposition);
 		}
 	}
 
-	private static function processFormData(&$fields,
-		HeaderFieldMap $headers, StreamInterface $stream, $boundary,
+	private function processFormData(&$fields, HeaderFieldMap $headers,
+		StreamInterface $stream, $boundary,
 		ContentDispositionHeaderValue $disposition)
 	{
 		$name = $disposition->getParameters()['name'];
+		$key = null;
+		$indexedFieldProcess = Container::keyValue($this->options,
+			self::INDEXED_FIELD_NAME, self::INDEXED_FIELD_NAME_PHP);
+		$duplicated = Container::keyValue($this->options,
+			self::DUPLICATED_FIELD_NAME,
+			self::DUPLICATED_FIELD_NAME_OVERRIDE);
+		if ($indexedFieldProcess == self::INDEXED_FIELD_NAME_PHP)
+		{
+			if (\preg_match('/^(.+?)\[(.*?)\]/', $name, $m))
+			{
+				$name = $m[1];
+				$key = $m[2];
+				if (ctype_digit($key))
+					$key = \intval($key);
+			}
+		}
+
 		$data = null;
 
 		$contentLength = Container::keyValue($headers,
@@ -153,11 +236,42 @@ class MultipartFormDataRequestBodyParserMiddleware implements
 
 		if (!\is_array($fields))
 			$fields = [];
-		$fields[$name] = $data;
+
+		if ($key !== null)
+		{
+			if (Container::keyExists($fields, $name))
+			{
+				if (!\is_array($fields[$name]))
+					$fields[$name] = [
+						$fields[$name]
+					];
+
+				if (\is_string($key) && empty($key))
+					$fields[$name][] = $data;
+				else
+					$fields[$name][$key] = $data;
+			}
+			else
+				$fields[$name] = [
+					$key => $data
+				];
+		}
+		elseif (Container::keyExists($fields, $name) &&
+			($duplicated == self::DUPLICATED_FIELD_NAME_ARRAY))
+		{
+			if (!\is_array($fields[$name]))
+				$fields[$name] = [
+					$fields[$name]
+				];
+
+			$fields[$name][] = $data;
+		}
+		else
+			$fields[$name] = $data;
 	}
 
-	private static function processFilePart(&$files,
-		HeaderFieldMap $headers, StreamInterface $stream, $boundary,
+	private function processFilePart(&$files, HeaderFieldMap $headers,
+		StreamInterface $stream, $boundary,
 		ContentDispositionHeaderValue $disposition)
 	{
 		$name = $disposition->getParameters()['name'];
@@ -272,4 +386,14 @@ class MultipartFormDataRequestBodyParserMiddleware implements
 		$files[$name] = new UploadedFile($uri, $length, $filename,
 			$mediaType, UPLOAD_ERR_OK);
 	}
+
+	const EOL = "\r\n";
+
+	const EOL_LENGTH = 2;
+
+	/**
+	 *
+	 * @var array
+	 */
+	private $options;
 }

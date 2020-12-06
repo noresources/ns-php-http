@@ -1,0 +1,20 @@
+--------------------------5b03f006c07b7c87
+Content-Disposition: form-data; 
+		name="key"
+
+value
+--------------------------5b03f006c07b7c87
+Content-Disposition: form-data; 
+		name="array[0]"
+
+Zero
+--------------------------5b03f006c07b7c87
+Content-Disposition: form-data; 
+		name="array[3]"
+
+Three
+--------------------------5b03f006c07b7c87
+Content-Disposition: form-data; 
+		name="key"
+
+othervalue
