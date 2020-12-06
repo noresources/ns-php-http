@@ -22,12 +22,15 @@ final class MultipartParserTest extends \PHPUnit\Framework\TestCase
 
 	public function testMultipartBodyParser()
 	{
-		$data = \file_get_contents(__DIR__ . '/../data/multipart-1.crlf');
+		$data = \file_get_contents(
+			__DIR__ . '/../data/multipart-1.crlf');
 		$body = Utility::createStreamFromText($data);
 
-		$request = ServerRequestFactory::createServerRequest('POST', '/foo/bar')->withHeader(
-			'Content-Type', 'multipart/form-data; boundary=------------------------5b03f006c07b7c87')->withBody(
-			$body);
+		$factory = new ServerRequestFactory();
+		$request = $factory->createServerRequest('POST', '/foo/bar')
+			->withHeader('Content-Type',
+			'multipart/form-data; boundary=------------------------5b03f006c07b7c87')
+			->withBody($body);
 
 		$this->assertInstanceOf(ServerRequestInterface::class, $request);
 
@@ -39,14 +42,16 @@ final class MultipartParserTest extends \PHPUnit\Framework\TestCase
 		$resultRequest = null;
 		$response = $mw->process($request,
 			new ClosureRequestHandler(
-				function (ServerRequestInterface $request) use (&$resultRequest) {
+				function (ServerRequestInterface $request) use (
+				&$resultRequest) {
 					$resultRequest = $request;
 					return new TextResponse('OK');
 				}));
 
 		$body->close();
 
-		$this->assertInstanceOf(ServerRequestInterface::class, $resultRequest);
+		$this->assertInstanceOf(ServerRequestInterface::class,
+			$resultRequest);
 
 		$fields = $resultRequest->getParsedBody();
 		$this->assertEquals([
@@ -60,7 +65,8 @@ final class MultipartParserTest extends \PHPUnit\Framework\TestCase
 			$this->assertArrayHasKey('file', $files);
 			$this->assertArrayHasKey('tmp_name', $files['file']);
 
-			$expectedContent = \file_get_contents(__DIR__ . '/../data/multipart-1.file.crlf');
+			$expectedContent = \file_get_contents(
+				__DIR__ . '/../data/multipart-1.file.crlf');
 			$content = \file_get_contents($files['file']['tmp_name']);
 
 			$this->assertEquals($expectedContent, $content);

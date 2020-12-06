@@ -29,8 +29,10 @@ final class StructuredTextParserTest extends \PHPUnit\Framework\TestCase
 
 		$body = Utility::createStreamFromText($json);
 
-		$request = ServerRequestFactory::createServerRequest('POST', '/foo/bar')->withHeader(
-			'Content-Type', 'application/json')->withBody($body);
+		$factory = new ServerRequestFactory();
+		$request = $factory->createServerRequest('POST', '/foo/bar')
+			->withHeader('Content-Type', 'application/json')
+			->withBody($body);
 
 		$this->assertInstanceOf(ServerRequestInterface::class, $request);
 
