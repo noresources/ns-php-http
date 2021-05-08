@@ -22,13 +22,6 @@ final class MultipartParserTest extends \PHPUnit\Framework\TestCase
 
 	public function testMultipartBodyParser()
 	{
-		$isCI = (\getenv('CI') == true);
-		if ($isCI)
-		{
-			$this->assertTrue($isCI);
-			return;
-		}
-
 		$data = \file_get_contents(
 			__DIR__ . '/../data/multipart-1.crlf');
 		$body = Utility::createStreamFromText($data);
@@ -82,13 +75,6 @@ final class MultipartParserTest extends \PHPUnit\Framework\TestCase
 
 	public function testMultipartBodyParserArrayField()
 	{
-		$isCI = (\getenv('CI') == 'true');
-		if ($isCI)
-		{
-			$this->assertTrue($isCI);
-			return;
-		}
-
 		$data = \file_get_contents(
 			__DIR__ . '/../data/multipart-arrayfield.crlf');
 		$body = Utility::createStreamFromText($data);

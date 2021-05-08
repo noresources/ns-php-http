@@ -10,13 +10,8 @@
  */
 namespace NoreSources\Http\Test;
 
-use Laminas\Diactoros\ServerRequestFactory;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use Laminas\Diactoros\PhpInputStream;
 use Laminas\Diactoros\Stream;
 use Psr\Http\Message\StreamInterface;
-use Psr\Http\Server\RequestHandlerInterface;
 
 class Utility
 {
@@ -26,13 +21,18 @@ class Utility
 	 * @param string $text
 	 * @return StreamInterface
 	 */
-	public static function createStreamFromText($text)
+	public static function createStreamFromText($text, $encode = false)
 	{
-		$stream = \fopen('data://text/plain,', 'w+');
+		$url = 'data://text/plain,';
+		if ($encode)
+		{
+			$url .= 'base64,';
+			$text = \base64_encode($text);
+		}
+		$stream = \fopen($url . $text, 'r');
 
 		assert(\is_resource($stream));
 
-		\fwrite($stream, $text);
 		$instance = new Stream($stream);
 		$instance->rewind();
 		return $instance;
