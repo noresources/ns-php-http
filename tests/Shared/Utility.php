@@ -28,7 +28,7 @@ class Utility
 	 */
 	public static function createStreamFromText($text)
 	{
-		$stream = \fopen('data://text/plain,', 'rw');
+		$stream = \fopen('data://text/plain,', 'w+');
 
 		assert(\is_resource($stream));
 
