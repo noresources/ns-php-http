@@ -13,10 +13,13 @@ use NoreSources\Http\QualityValueInterface;
 use NoreSources\Http\Coding\ContentCoding;
 use NoreSources\Http\Header\AcceptEncodingHeaderValue;
 use NoreSources\Http\Header\AcceptHeaderValue;
+use NoreSources\Http\Header\AcceptLanguageHeaderValue;
 use NoreSources\Http\Header\AlternativeValueListInterface;
 use NoreSources\Http\Header\ContentTypeHeaderValue;
 use NoreSources\Http\Header\HeaderField;
 use NoreSources\Http\Header\HeaderValueFactory;
+use NoreSources\Language\LanguageRange;
+use NoreSources\Language\LanguageRangeFilter;
 use NoreSources\MediaType\MediaRange;
 use NoreSources\MediaType\MediaType;
 use NoreSources\MediaType\MediaTypeInterface;
@@ -141,7 +144,8 @@ class ContentNegociator
 		}
 
 		if (Container::count($filtered) == 0)
-			throw new ContentNegociationException(self::CONTENT_TYPE);
+			throw new ContentNegociationException(
+				HeaderField::CONTENT_TYPE);
 
 		Container::uksort($filtered,
 			function ($a, $b) use ($qvalues) {
@@ -173,19 +177,19 @@ class ContentNegociator
 	 */
 	public function negociateEncoding($accepted, $available)
 	{
-		$hasAnyCoding = false;
+		$hasAny = false;
 		$explicitelyAccepted = Container::map($accepted,
-			function ($k, $a) use (&$hasAnyCoding) {
+			function ($k, $a) use (&$hasAny) {
 				$coding = null;
 				if ($a instanceof AcceptEncodingHeaderValue)
 					$coding = $a->getCoding();
 				elseif (\is_string($k) && \is_numeric($a))
 					$coding = $k;
-				elseif (\is_string($a))
+				else
 					$coding = TypeConversion::toString($a);
 				if ($coding == AcceptEncodingHeaderValue::ANY)
 				{
-					$hasAnyCoding = true;
+					$hasAny = true;
 					$coding = null;
 				}
 				return $coding;
@@ -236,10 +240,10 @@ class ContentNegociator
 		}
 
 		$filtered = Container::filter($scores,
-			function ($k, $v) use ($hasAnyCoding, $explicitelyAccepted) {
+			function ($k, $v) use ($hasAny, $explicitelyAccepted) {
 				if ($v < 0.001)
 					return false;
-				if ($hasAnyCoding)
+				if ($hasAny)
 					return true;
 				return Container::valueExists($explicitelyAccepted, $k);
 			});
@@ -265,22 +269,89 @@ class ContentNegociator
 	 * @throws ContentNegociationException
 	 * @return mixed
 	 */
-	public function negociateLanguage($accepted, $availables,
-		$headerField)
+	public function negociateLanguage($accepted, $available)
 	{
-		foreach ($accepted as $a)
+		$preferences = [];
+
+		$defaultValue = 1;
+		foreach ($accepted as $k => $a)
 		{
-			foreach ($availables as $available)
+			$range = null;
+			$q = 1;
+			if ($a instanceof AcceptLanguageHeaderValue)
 			{
-				if (\strcasecmp(TypeConversion::toString($a),
-					TypeConversion::toString($available)) == 0)
-				{
-					return $available;
-				}
+				$q = $a->getQualityValue();
+				$range = $a->getLanguageRange();
+				$a = \strval($a);
+			}
+			elseif ($a instanceof LanguageRange)
+				$range = $a;
+			elseif (\is_string($k) && \is_numeric($a))
+			{
+				$q = $a;
+				$a = $k;
+			}
+
+			if ($range === null)
+				$range = LanguageRange::fromString($a,
+					LanguageRange::TYPE_BASIC);
+
+			if (!\is_string($a))
+				$a = TypeConversion::toString($range);
+
+			if ($a == LanguageRange::ANY)
+			{
+				$hasAny = true;
+				$defaultValue = $q;
+				continue;
+			}
+
+			$preferences[\strval($range)] = [
+				'range' => $range,
+				'q' => $q
+			];
+		}
+
+		Container::uasort($preferences,
+			function ($a, $b) {
+				$qa = $a['q'];
+				$qb = $b['q'];
+
+				$v = (($qb - $qa) > 0) ? 1 : -1;
+				if ($v)
+					return $v;
+				$sa = \strtolower(\strval($a['range']));
+				$sb = \strtolower(\strval($b['range']));
+				$la = \strlen($sa);
+				$lb = \strlen($sb);
+				$l = min($la, $lb);
+				$sa = \substr($sa, 0, $l);
+				$sb = \substr($sb, 0, $l);
+				if ($sa == $sb)
+					return $lb - $la;
+				return -1;
+			});
+
+		foreach ($preferences as $p)
+		{
+			$range = $p['range'];
+			$filter = new LanguageRangeFilter($range);
+			foreach ($available as $a)
+			{
+				$m = $filter->match($a);
+
+				if ($m)
+					return $a;
 			}
 		}
 
-		throw new ContentNegociationException($headerField);
+		/**
+		 * On matching failure, the recommended behavior is to
+		 * ignore the header.
+		 *
+		 * @see https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.5
+		 */
+		return Container::firstValue($available);
 	}
 
 	/**

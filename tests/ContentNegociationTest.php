@@ -14,6 +14,8 @@ use NoreSources\Http\ContentNegociation\ContentNegociationException;
 use NoreSources\Http\ContentNegociation\ContentNegociator;
 use NoreSources\Http\Header\AcceptEncodingAlternativeValueList;
 use NoreSources\Http\Header\AcceptEncodingHeaderValue;
+use NoreSources\Http\Header\AcceptLanguageAlternativeValueList;
+use NoreSources\Http\Header\AcceptLanguageHeaderValue;
 use NoreSources\Http\Header\HeaderField;
 use NoreSources\Http\Header\HeaderValueFactory;
 use NoreSources\Http\Header\InvalidHeaderException;
@@ -21,6 +23,134 @@ use NoreSources\Type\TypeConversion;
 
 final class ContentNegociationtTest extends \PHPUnit\Framework\TestCase
 {
+
+	public function testLanguage()
+	{
+		$tests = [
+			'fallback-ignore' => [
+				'line' => 'Accept-Language: en, fr, de',
+				'accepted' => [
+					'en' => 1,
+					'fr' => 1,
+					'de' => 1
+				],
+				'available' => [
+					'es'
+				],
+				'expected' => 'es'
+			],
+			'match' => [
+				'line' => 'Accept-Language: en, fr, de',
+				'accepted' => [
+					'en' => 1,
+					'fr' => 1,
+					'de' => 1
+				],
+				'available' => [
+					'fr'
+				],
+				'expected' => 'fr'
+			],
+			'qvalue ordering' => [
+				'line' => 'Accept-Language: en; q=0.5, fr; q=0.9, de; q=0.6',
+				'accepted' => [
+					'en' => 0.5,
+					'fr' => 0.9,
+					'de' => 0.6
+				],
+				'available' => [
+					'en',
+					'fr'
+				],
+				'expected' => 'fr'
+			]
+		];
+
+		$negociator = ContentNegociator::getInstance();
+
+		foreach ($tests as $label => $test)
+		{
+			$headerLine = Container::keyValue($test, 'line');
+			$error = Container::keyValue($test, 'error', false);
+			$accepted = Container::keyValue($test, 'accepted');
+			$available = Container::keyValue($test, 'available', []);
+			$expected = Container::keyValue($test, 'expected');
+
+			$parsed = null;
+
+			try
+			{
+				$parsed = HeaderValueFactory::fromHeaderLine(
+					$headerLine, false);
+				$label .= PHP_EOL . '[' .
+					TypeConversion::toString($parsed);
+				$label .= '] vs [' .
+					Container::implodeValues($available, ', ') . ']';
+			}
+			catch (InvalidHeaderException $e)
+			{
+				$parsed = $e;
+			}
+
+			if ($error == 'parse')
+			{
+				$this->assertInstanceOf(InvalidHeaderException::class,
+					$parsed, $label . ' should fail to parse');
+				continue;
+			}
+
+			$this->assertInstanceOf(
+				AcceptLanguageAlternativeValueList::class, $parsed,
+				$label . ' result');
+
+			$this->assertCount(Container::count($accepted), $parsed,
+				$label . '. Number of alternatives.');
+
+			$i = 0;
+			foreach ($parsed as $alternative)
+			{
+				$this->assertInstanceOf(
+					AcceptLanguageHeaderValue::class, $alternative,
+					$label . ' alternative class');
+
+				/** @var AcceptLanguageHeaderValue $alternative */
+
+				$range = $alternative->getLanguageRange();
+				$strrange = \strval($range);
+
+				$this->assertArrayHasKey($strrange, $accepted,
+					$label . ' alternative ' . $i . ' range');
+
+				$this->assertEquals($accepted[$strrange],
+					$alternative->getQualityValue(),
+					$label . ' alternative ' . $i . ' quality value');
+
+				$i++;
+			}
+
+			$negociated = null;
+			try
+			{
+				$negociated = $negociator->negociateLanguage($accepted,
+					$available);
+			}
+			catch (ContentNegociationException $e)
+			{
+				$negociated = $e;
+			}
+
+			if ($error == 'negociate')
+			{
+				$this->assertInstanceOf(
+					ContentNegociationException::class, $negociated,
+					$label . ' should failed to negociate');
+				continue;
+			}
+
+			$this->assertEquals($expected, $negociated,
+				$label . ' negociation result');
+		}
+	}
 
 	public function testEncoding()
 	{
