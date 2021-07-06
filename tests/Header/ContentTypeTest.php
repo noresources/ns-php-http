@@ -1,10 +1,7 @@
 <?php
 /**
- * Copyright © 2012 - 2020 by Renaud Guillard (dev@nore.fr)
+ * Copyright © 2012 - 2021 by Renaud Guillard (dev@nore.fr)
  * Distributed under the terms of the MIT License, see LICENSE
- */
-
-/**
  *
  * @package HTTP
  */
@@ -40,7 +37,8 @@ final class ContentTypeTest extends \PHPUnit\Framework\TestCase
 			$valid = false;
 			try
 			{
-				$contentType = HeaderValueFactory::fromKeyValue('content-type', $test->string);
+				$contentType = HeaderValueFactory::fromKeyValue(
+					'content-type', $test->string);
 				$valid = true;
 			}
 			catch (\Exception $e)
@@ -53,13 +51,16 @@ final class ContentTypeTest extends \PHPUnit\Framework\TestCase
 			$this->assertEquals($test->valid, $valid,
 				$label . ' is ' . ($test->valid ? '' : 'not ') . 'valid');
 
-			$this->assertEquals($test->mediaType, strval($contentType->getMediaType()));
+			$this->assertEquals($test->mediaType,
+				strval($contentType->getMediaType()));
 			$this->assertEquals($test->charset,
 				$contentType->getMediaType()
 					->getParameters()['charset'], $label . ' charset');
 			$this->assertEquals($test->boundary,
-				strval($contentType->getMediaType()
-					->getParameters()['boundary']), $label . ' boundary');
+				strval(
+					$contentType->getMediaType()
+						->getParameters()['boundary']),
+				$label . ' boundary');
 		}
 	}
 }

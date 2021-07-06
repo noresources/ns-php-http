@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "78050f68241bbe387f0c16b96efb0fbb",
+    "content-hash": "3ecd6a27a934d17dbb5151de7ea3f497",
     "packages": [
         {
             "name": "noresources/ns-php-core",
-            "version": "2.2.x-dev",
+            "version": "dev-devel",
             "source": {
                 "type": "git",
                 "url": "https://github.com/noresources/ns-php-core.git",
-                "reference": "d91956a1d8475e9e57cc8abdeb74fc9e0d845fbb"
+                "reference": "183aef7fc8e48d0714732b44a90918a4634620eb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/noresources/ns-php-core/zipball/d91956a1d8475e9e57cc8abdeb74fc9e0d845fbb",
-                "reference": "d91956a1d8475e9e57cc8abdeb74fc9e0d845fbb",
+                "url": "https://api.github.com/repos/noresources/ns-php-core/zipball/183aef7fc8e48d0714732b44a90918a4634620eb",
+                "reference": "183aef7fc8e48d0714732b44a90918a4634620eb",
                 "shasum": ""
             },
             "require": {
@@ -40,7 +40,8 @@
                     "dev-2.0.x": "2.0.x-dev",
                     "dev-2.1.x": "2.1.x-dev",
                     "dev-2.2.x": "2.2.x-dev",
-                    "dev-master": "2.3.x-dev"
+                    "dev-master": "2.3.x-dev",
+                    "dev-devel": "2.4.x-dev"
                 }
             },
             "autoload": {
@@ -66,26 +67,26 @@
             ],
             "support": {
                 "issues": "https://github.com/noresources/ns-php-core/issues",
-                "source": "https://github.com/noresources/ns-php-core/tree/v2.2.7"
+                "source": "https://github.com/noresources/ns-php-core/tree/devel"
             },
-            "time": "2021-06-21T18:57:28+00:00"
+            "time": "2021-07-06T18:03:04+00:00"
         },
         {
             "name": "noresources/ns-php-http-core",
-            "version": "1.0.x-dev",
+            "version": "dev-devel",
             "source": {
                 "type": "git",
                 "url": "https://github.com/noresources/ns-php-http-core.git",
-                "reference": "95eebc93edf28635f37e82524d2a49903bd61bc6"
+                "reference": "ea4a08ef3e8d6ab0c1c423a18e552fc58c755fa8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/noresources/ns-php-http-core/zipball/95eebc93edf28635f37e82524d2a49903bd61bc6",
-                "reference": "95eebc93edf28635f37e82524d2a49903bd61bc6",
+                "url": "https://api.github.com/repos/noresources/ns-php-http-core/zipball/ea4a08ef3e8d6ab0c1c423a18e552fc58c755fa8",
+                "reference": "ea4a08ef3e8d6ab0c1c423a18e552fc58c755fa8",
                 "shasum": ""
             },
             "require": {
-                "noresources/ns-php-core": ">=2.2 <2.3",
+                "noresources/ns-php-core": "~2.4.0",
                 "php": ">=5.6"
             },
             "require-dev": {
@@ -95,7 +96,8 @@
             "extra": {
                 "branch-alias": {
                     "dev-1.0.x": "1.0.x-dev",
-                    "dev-master": "1.1.x-dev"
+                    "dev-master": "1.1.x-dev",
+                    "dev-devel": "1.2.x-dev"
                 }
             },
             "autoload": {
@@ -122,28 +124,27 @@
             ],
             "support": {
                 "issues": "https://github.com/noresources/ns-php-http-core/issues",
-                "source": "https://github.com/noresources/ns-php-http-core/tree/v1.0.3"
+                "source": "https://github.com/noresources/ns-php-http-core/tree/devel"
             },
-            "time": "2021-06-21T19:12:37+00:00"
+            "time": "2021-07-08T18:22:40+00:00"
         },
         {
-            "name": "noresources/ns-php-mediatype",
-            "version": "1.2.x-dev",
+            "name": "noresources/ns-php-languagetag",
+            "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/noresources/ns-php-mediatype.git",
-                "reference": "8be35ccb1de55c8432040422395d822e5f4f2eb0"
+                "url": "https://github.com/noresources/ns-php-languagetag.git",
+                "reference": "fad9779f9d5c8310eb9399b2d770d86397bcb5c1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/noresources/ns-php-mediatype/zipball/8be35ccb1de55c8432040422395d822e5f4f2eb0",
-                "reference": "8be35ccb1de55c8432040422395d822e5f4f2eb0",
+                "url": "https://api.github.com/repos/noresources/ns-php-languagetag/zipball/fad9779f9d5c8310eb9399b2d770d86397bcb5c1",
+                "reference": "fad9779f9d5c8310eb9399b2d770d86397bcb5c1",
                 "shasum": ""
             },
             "require": {
-                "noresources/ns-php-http-core": ">=1.0 <1.1",
-                "php": ">= 5.6",
-                "psr/container": "^1.0"
+                "noresources/ns-php-core": "^2.3.0",
+                "php": ">= 5.5"
             },
             "require-dev": {
                 "phpunit/phpunit": "< 7.0"
@@ -151,8 +152,67 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "NoreSources\\Language\\": "src/",
+                    "NoreSources\\Language\\Test\\": "tests/src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Renaud Guillard",
+                    "email": "dev@nore.fr",
+                    "role": "lead"
+                }
+            ],
+            "description": "IETF BCP47 Language tag manipulation",
+            "keywords": [
+                "ietf",
+                "language"
+            ],
+            "support": {
+                "issues": "https://github.com/noresources/ns-php-languagetag/issues",
+                "source": "https://github.com/noresources/ns-php-languagetag/tree/master"
+            },
+            "time": "2021-06-30T23:26:50+00:00"
+        },
+        {
+            "name": "noresources/ns-php-mediatype",
+            "version": "dev-devel",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/noresources/ns-php-mediatype.git",
+                "reference": "00e89ded46d18db1da8d70b37e93e5e2c911a898"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/noresources/ns-php-mediatype/zipball/00e89ded46d18db1da8d70b37e93e5e2c911a898",
+                "reference": "00e89ded46d18db1da8d70b37e93e5e2c911a898",
+                "shasum": ""
+            },
+            "require": {
+                "noresources/ns-php-core": "~2.4.0",
+                "noresources/ns-php-http-core": "~1.2.0",
+                "php": ">= 5.6",
+                "psr/container": "^1.0"
+            },
+            "require-dev": {
+                "ext-dom": "*",
+                "phpunit/phpunit": "< 7.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
                     "dev-1.2.x": "1.2.x-dev",
-                    "dev-master": "1.3.x-dev"
+                    "dev-master": "1.3.x-dev",
+                    "dev-devel": "1.4.x-dev"
                 }
             },
             "autoload": {
@@ -178,9 +238,9 @@
             ],
             "support": {
                 "issues": "https://github.com/noresources/ns-php-mediatype/issues",
-                "source": "https://github.com/noresources/ns-php-mediatype/tree/v1.2.3"
+                "source": "https://github.com/noresources/ns-php-mediatype/tree/devel"
             },
-            "time": "2021-06-21T19:17:57+00:00"
+            "time": "2021-07-09T18:39:38+00:00"
         },
         {
             "name": "psr/container",
@@ -2590,6 +2650,7 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
+        "psr/http-server-middleware": 20,
         "laminas/laminas-httphandlerrunner": 20,
         "nette/php-generator": 20
     },

@@ -2,15 +2,12 @@
 /**
  * Copyright © 2012 - 2020 by Renaud Guillard (dev@nore.fr)
  * Distributed under the terms of the MIT License, see LICENSE
- */
-
-/**
  *
  * @package HTTP
  */
 namespace NoreSources\Http;
 
-use NoreSources\Container;
+use NoreSources\Container\Container;
 
 final class RFC7230Test extends \PHPUnit\Framework\TestCase
 {

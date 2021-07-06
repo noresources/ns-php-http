@@ -1,10 +1,7 @@
 <?php
 /**
- * Copyright © 2012 - 2020 by Renaud Guillard (dev@nore.fr)
+ * Copyright © 2012 - 2021 by Renaud Guillard (dev@nore.fr)
  * Distributed under the terms of the MIT License, see LICENSE
- */
-
-/**
  *
  * @package HTTP
  */
@@ -13,7 +10,8 @@ namespace NoreSources\Http\Header;
 /**
  * Cookie header value type
  */
-class CookieHeaderValue extends \ArrayObject implements HeaderValueInterface
+class CookieHeaderValue extends \ArrayObject implements
+	HeaderValueInterface
 {
 
 	public function __construct($cookies = array())

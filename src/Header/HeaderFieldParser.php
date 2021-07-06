@@ -1,10 +1,7 @@
 <?php
 /**
- * Copyright © 2012 - 2020 by Renaud Guillard (dev@nore.fr)
+ * Copyright © 2012 - 2021 by Renaud Guillard (dev@nore.fr)
  * Distributed under the terms of the MIT License, see LICENSE
- */
-
-/**
  *
  * @package HTTP
  */
@@ -24,17 +21,20 @@ class HeaderFieldParser
 	 * @param callable $headerValueProcessor
 	 * @throws \InvalidArgumentException
 	 */
-	public function __construct($headerNameProcessor = null, $headerValueProcessor = null)
+	public function __construct($headerNameProcessor = null,
+		$headerValueProcessor = null)
 	{
 		if ($headerNameProcessor !== null)
 			if (!\is_callable($headerNameProcessor))
-				throw new \InvalidArgumentException('headerNameProcessor is not callable');
+				throw new \InvalidArgumentException(
+					'headerNameProcessor is not callable');
 
 		$this->headerNameProcessor = $headerNameProcessor;
 
 		if ($headerValueProcessor !== null)
 			if (!\is_callable($headerValueProcessor))
-				throw new \InvalidArgumentException('headerValueProcessor is not callable');
+				throw new \InvalidArgumentException(
+					'headerValueProcessor is not callable');
 
 		$this->headerValueProcessor = $headerValueProcessor;
 	}
@@ -85,10 +85,12 @@ class HeaderFieldParser
 			$headerValue = \ltrim(\substr($headerLine, $colon + 1));
 
 			if (\is_callable($this->headerNameProcessor))
-				$headerName = \call_user_func($this->headerNameProcessor, $headerName);
+				$headerName = \call_user_func(
+					$this->headerNameProcessor, $headerName);
 
 			if (\is_callable($this->headerValueProcessor))
-				$headerValue = \call_user_func($this->headerValueProcessor, $headerName,
+				$headerValue = \call_user_func(
+					$this->headerValueProcessor, $headerName,
 					$headerValue);
 
 			$headers[$headerName] = $headerValue;

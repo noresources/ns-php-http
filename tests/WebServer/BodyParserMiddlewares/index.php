@@ -1,11 +1,11 @@
 <?php
 use Laminas\Diactoros\ServerRequestFactory;
 use Laminas\Diactoros\Response\TextResponse;
-use NoreSources\Container;
-use NoreSources\TypeDescription;
+use NoreSources\Container\Container;
 use NoreSources\Http\Server\MultipartFormDataRequestBodyParserMiddleware;
 use NoreSources\Http\Server\StructuredTextRequestBodyParserMiddleware;
 use NoreSources\Http\Test\ClosureRequestHandler;
+use NoreSources\Type\TypeDescription;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 

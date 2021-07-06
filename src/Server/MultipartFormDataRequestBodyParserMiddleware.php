@@ -1,17 +1,13 @@
 <?php
 /**
- * Copyright © 2012 - 2020 by Renaud Guillard (dev@nore.fr)
+ * Copyright © 2012 - 2021 by Renaud Guillard (dev@nore.fr)
  * Distributed under the terms of the MIT License, see LICENSE
- */
-
-/**
  *
  * @package HTTP
  */
 namespace NoreSources\Http\Server;
 
-use NoreSources\Container;
-use NoreSources\TypeDescription;
+use NoreSources\Container\Container;
 use NoreSources\Http\UploadedFile;
 use NoreSources\Http\Header\ContentDispositionHeaderValue;
 use NoreSources\Http\Header\ContentTypeHeaderValue;
@@ -22,6 +18,7 @@ use NoreSources\Http\Header\HeaderValueFactory;
 use NoreSources\Http\Header\HeaderValueInterface;
 use NoreSources\MediaType\MediaRange;
 use NoreSources\MediaType\MediaTypeFactory;
+use NoreSources\Type\TypeDescription;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;

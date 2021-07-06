@@ -1,14 +1,13 @@
 <?php
-
 /**
- * Copyright © 2012 - 2020 by Renaud Guillard (dev@nore.fr)
+ * Copyright © 2012 - 2021 by Renaud Guillard (dev@nore.fr)
  * Distributed under the terms of the MIT License, see LICENSE
  *
  * @package HTTP
  */
 namespace NoreSources\Http\Header;
 
-use NoreSources\Container;
+use NoreSources\Container\Container;
 use NoreSources\Http\RFC7235;
 use NoreSources\Http\Authentication\AuthenticationScheme;
 use NoreSources\Http\Authentication\CredentialDataFactory;
@@ -25,16 +24,19 @@ class AuthorizationHeaderValue implements HeaderValueInterface
 	 */
 	public static function fromString($text)
 	{
-		$mainPattern = '(?<scheme>' . RFC7235::AUTH_SCHEME_PATTERN . ')(?:\x20+(?<data>.+))?';
+		$mainPattern = '(?<scheme>' . RFC7235::AUTH_SCHEME_PATTERN .
+			')(?:\x20+(?<data>.+))?';
 		$matches = [];
 		if (!\preg_match(chr(1) . $mainPattern . chr(1), $text, $matches))
-			throw new InvalidHeaderException('Unrecognized credentials pattern',
+			throw new InvalidHeaderException(
+				'Unrecognized credentials pattern',
 				InvalidHeaderException::INVALID_HEADER_VALUE);
 
 		$scheme = $matches['scheme'];
 		$credentialData = null;
 		if (($data = Container::keyValue($matches, 'data')))
-			$credentialData = CredentialDataFactory::createFromString($scheme, $data);
+			$credentialData = CredentialDataFactory::createFromString(
+				$scheme, $data);
 
 		return new AuthorizationHeaderValue($scheme, $credentialData);
 	}
@@ -46,7 +48,8 @@ class AuthorizationHeaderValue implements HeaderValueInterface
 	 * @param string|array $data
 	 *        	Deserialized credential data
 	 */
-	public function __construct($scheme = AuthenticationScheme::BASIC, $data = null)
+	public function __construct($scheme = AuthenticationScheme::BASIC,
+		$data = null)
 	{
 		$this->scheme = $scheme;
 		$this->credentialData = $data;

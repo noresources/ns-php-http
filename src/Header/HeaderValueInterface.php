@@ -1,16 +1,13 @@
 <?php
 /**
- * Copyright © 2012 - 2020 by Renaud Guillard (dev@nore.fr)
+ * Copyright © 2012 - 2021 by Renaud Guillard (dev@nore.fr)
  * Distributed under the terms of the MIT License, see LICENSE
- */
-
-/**
  *
  * @package HTTP
  */
 namespace NoreSources\Http\Header;
 
-use NoreSources\StringRepresentation;
+use NoreSources\Type\StringRepresentation;
 
 /**
  * Header field value

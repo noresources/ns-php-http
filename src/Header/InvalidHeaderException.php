@@ -1,20 +1,24 @@
 <?php
 /**
- * Copyright © 2012 - 2020 by Renaud Guillard (dev@nore.fr)
+ * Copyright © 2012 - 2021 by Renaud Guillard (dev@nore.fr)
  * Distributed under the terms of the MIT License, see LICENSE
- */
-
-/**
  *
  * @package HTTP
  */
 namespace NoreSources\Http\Header;
 
+use NoreSources\Http\Status;
+use NoreSources\Http\StatusExceptionInterface;
+use NoreSources\Http\Traits\StatusExceptionTrait;
+
 /**
  * Exception raised when a headre line content is not valid
  */
-class InvalidHeaderException extends \ErrorException
+class InvalidHeaderException extends \ErrorException implements
+	StatusExceptionInterface
 {
+
+	use StatusExceptionTrait;
 
 	const INVALID_HEADER_NAME = 1;
 
@@ -22,15 +26,19 @@ class InvalidHeaderException extends \ErrorException
 
 	const INVALID_HEADER_LINE = 3;
 
+	public function getHeaderErrorType()
+	{
+		return $this->headerErrorType;
+	}
+
 	/**
 	 *
 	 * @param string $text
 	 *        	Header line, name or value
-	 * @param integer $code
-	 *        	[1-3] Header component which is not valid
-	 *        	Error code
+	 * @param integer $type
+	 *        	[1-3] Header component which is not valid.
 	 */
-	public function __construct($text, $code)
+	public function __construct($text, $type)
 	{
 		$genericTexts = [
 			self::INVALID_HEADER_LINE => 'Invalid header line format',
@@ -38,9 +46,12 @@ class InvalidHeaderException extends \ErrorException
 			self::INVALID_HEADER_VALUE => 'Invalid header value'
 		];
 
-		if (\array_key_exists($code, $genericTexts))
-			$text = $genericTexts[$code] . ': ' . $text;
+		if (\array_key_exists($type, $genericTexts))
+			$text = $genericTexts[$type] . ': ' . $text;
 
-		parent::__construct($text, $code);
+		parent::__construct($text, Status::BAD_REQUEST);
+		$this->headerErrorType = $type;
 	}
+
+	private $headerErrorType;
 }

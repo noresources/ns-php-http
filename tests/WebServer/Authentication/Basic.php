@@ -1,13 +1,19 @@
 <?php
+/**
+ * Copyright © 2012 - 2021 by Renaud Guillard (dev@nore.fr)
+ * Distributed under the terms of the MIT License, see LICENSE
+ *
+ * @package HTTP
+ */
 use Laminas\Diactoros\ServerRequestFactory;
 use Laminas\Diactoros\Response\TextResponse;
 use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
-use NoreSources\TypeDescription;
 use NoreSources\Http\Header\HeaderField;
 use NoreSources\Http\Header\HeaderValueFactory;
 use NoreSources\Http\Header\HeaderValueInterface;
 use NoreSources\Http\Tools\BasicTcpLogger;
 use NoreSources\Http\Tools\RequestDumper;
+use NoreSources\Type\TypeDescription;
 
 ini_set('html_errors', 'off');
 
@@ -25,9 +31,11 @@ $request = ServerRequestFactory::fromGlobals();
 $dumper->dump($request);
 
 $response = null;
-$authorization = HeaderValueFactory::fromMessage($request, HeaderField::AUTHORIZATION);
+$authorization = HeaderValueFactory::fromMessage($request,
+	HeaderField::AUTHORIZATION);
 
-$requestLogger->debug('Auth = ' . TypeDescription::getName($authorization));
+$requestLogger->debug(
+	'Auth = ' . TypeDescription::getName($authorization));
 
 if ($authorization instanceof HeaderValueInterface)
 	$response = new TextResponse('Hello ' . $authorization);

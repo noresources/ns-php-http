@@ -1,10 +1,7 @@
 <?php
 /**
- * Copyright © 2012 - 2020 by Renaud Guillard (dev@nore.fr)
+ * Copyright © 2012 - 2021 by Renaud Guillard (dev@nore.fr)
  * Distributed under the terms of the MIT License, see LICENSE
- */
-
-/**
  *
  * @package HTTP
  */
@@ -13,7 +10,7 @@ namespace NoreSources\Http\Header;
 use NoreSources\Http\ParameterMap;
 use NoreSources\Http\ParameterMapSerializer;
 use NoreSources\Http\QualityValueInterface;
-use NoreSources\Http\QualityValueTrait;
+use NoreSources\Http\Traits\QualityValueTrait;
 use NoreSources\MediaType\MediaRange;
 use NoreSources\MediaType\MediaTypeInterface;
 

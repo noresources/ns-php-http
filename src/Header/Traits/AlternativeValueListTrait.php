@@ -1,16 +1,13 @@
 <?php
 /**
- * Copyright © 2012 - 2020 by Renaud Guillard (dev@nore.fr)
+ * Copyright © 2012 - 2021 by Renaud Guillard (dev@nore.fr)
  * Distributed under the terms of the MIT License, see LICENSE
- */
-
-/**
  *
  * @package HTTP
  */
-namespace NoreSources\Http\Header;
+namespace NoreSources\Http\Header\Traits;
 
-use NoreSources\Container;
+use NoreSources\Container\Container;
 
 trait AlternativeValueListTrait
 {
@@ -54,7 +51,8 @@ trait AlternativeValueListTrait
 		if ($alternatives instanceof \ArrayObject)
 			$this->alternativeValues = $alternatives;
 		else
-			$this->alternativeValues->exchangeArray(Container::createArray($alternatives));
+			$this->alternativeValues->exchangeArray(
+				Container::createArray($alternatives));
 	}
 
 	/**

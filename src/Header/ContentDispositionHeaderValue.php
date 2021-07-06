@@ -1,10 +1,7 @@
 <?php
 /**
- * Copyright © 2012 - 2020 by Renaud Guillard (dev@nore.fr)
+ * Copyright © 2012 - 2021 by Renaud Guillard (dev@nore.fr)
  * Distributed under the terms of the MIT License, see LICENSE
- */
-
-/**
  *
  * @package HTTP
  */
@@ -16,7 +13,8 @@ use NoreSources\Http\ParameterMapProviderTrait;
 use NoreSources\Http\ParameterMapSerializer;
 use NoreSources\Http\RFC7230;
 
-class ContentDispositionHeaderValue implements HeaderValueInterface, ParameterMapProviderInterface
+class ContentDispositionHeaderValue implements HeaderValueInterface,
+	ParameterMapProviderInterface
 {
 	use ParameterMapProviderTrait;
 
@@ -34,7 +32,9 @@ class ContentDispositionHeaderValue implements HeaderValueInterface, ParameterMa
 	{
 		$s = $this->dispositionType;
 		if ($this->getParameters()->count())
-			$s .= '; ' . ParameterMapSerializer::serializeParameters($this->getParameters());
+			$s .= '; ' .
+				ParameterMapSerializer::serializeParameters(
+					$this->getParameters());
 		return $s;
 	}
 
@@ -51,9 +51,11 @@ class ContentDispositionHeaderValue implements HeaderValueInterface, ParameterMa
 	public static function parseFieldValueString($text)
 	{
 		$match = [];
-		$pattern = RFC7230::OWS_PATTERN . '(' . RFC7230::TOKEN_PATTERN . ')';
+		$pattern = RFC7230::OWS_PATTERN . '(' . RFC7230::TOKEN_PATTERN .
+			')';
 		if (!\preg_match(chr(1) . $pattern . chr(1), $text, $match))
-			throw new \InvalidArgumentException('Invalid content disposition type');
+			throw new \InvalidArgumentException(
+				'Invalid content disposition type');
 
 		$type = $match[1];
 		$consumed = \strlen($match[0]);
@@ -64,8 +66,8 @@ class ContentDispositionHeaderValue implements HeaderValueInterface, ParameterMa
 		{
 			$consumed = $semicolon + 1;
 			$parameters = $headerValue->getParameters();
-			$consumed += ParameterMapSerializer::unserializeParameters($parameters,
-				\substr($text, $consumed));
+			$consumed += ParameterMapSerializer::unserializeParameters(
+				$parameters, \substr($text, $consumed));
 		}
 
 		return [

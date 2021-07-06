@@ -1,10 +1,7 @@
 <?php
 /**
- * Copyright © 2012 - 2020 by Renaud Guillard (dev@nore.fr)
+ * Copyright © 2012 - 2021 by Renaud Guillard (dev@nore.fr)
  * Distributed under the terms of the MIT License, see LICENSE
- */
-
-/**
  *
  * @package HTTP
  */
@@ -13,10 +10,11 @@ namespace NoreSources\Http\Header;
 use NoreSources\Http\ParameterMap;
 use NoreSources\Http\ParameterMapSerializer;
 use NoreSources\Http\QualityValueInterface;
-use NoreSources\Http\QualityValueTrait;
 use NoreSources\Http\RFC7230;
+use NoreSources\Http\Traits\QualityValueTrait;
 
-class AcceptLanguageHeaderValue implements HeaderValueInterface, QualityValueInterface
+class AcceptLanguageHeaderValue implements HeaderValueInterface,
+	QualityValueInterface
 {
 	use QualityValueTrait;
 
@@ -46,9 +44,10 @@ class AcceptLanguageHeaderValue implements HeaderValueInterface, QualityValueInt
 		{
 			$match = [];
 			if (!\preg_match(
-				chr(1) . RFC7230::OWS_PATTERN . '(' . RFC7230::TOKEN_PATTERN . ')' . chr(1), $text,
-				$match))
-				throw new \InvalidArgumentException($text . ' ns not a valid Language range');
+				chr(1) . RFC7230::OWS_PATTERN . '(' .
+				RFC7230::TOKEN_PATTERN . ')' . chr(1), $text, $match))
+				throw new \InvalidArgumentException(
+					$text . ' ns not a valid Language range');
 
 			return [
 				new AcceptLanguageHeaderValue(\trim($match[1])),
@@ -63,7 +62,8 @@ class AcceptLanguageHeaderValue implements HeaderValueInterface, QualityValueInt
 		$value = new AcceptLanguageHeaderValue($range);
 
 		$q = new ParameterMap();
-		$consumed += ParameterMapSerializer::unserializeParameters($q, $text,
+		$consumed += ParameterMapSerializer::unserializeParameters($q,
+			$text,
 			function ($n, $v) {
 
 				return (\strcasecmp($n, 'q') == 0) ? ParameterMapSerializer::ACCEPT : ParameterMapSerializer::ABORT;

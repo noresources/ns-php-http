@@ -12,7 +12,7 @@ namespace NoreSources\Http;
 
 use Nette\PhpGenerator\Dumper;
 use Nette\PhpGenerator\PhpFile;
-use NoreSources\Container;
+use NoreSources\Container\Container;
 use NoreSources\Http\Tools\FileBuilderHelper;
 require (__DIR__ . '/../vendor/autoload.php');
 

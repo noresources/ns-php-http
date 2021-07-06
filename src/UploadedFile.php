@@ -1,16 +1,14 @@
 <?php
 /**
- * Copyright © 2012 - 2020 by Renaud Guillard (dev@nore.fr)
+ * Copyright © 2012 - 2021 by Renaud Guillard (dev@nore.fr)
  * Distributed under the terms of the MIT License, see LICENSE
- */
-
-/**
  *
  * @package HTTP
  */
 namespace NoreSources\Http;
 
-use NoreSources\Container;
+use const Nette\PhpGenerator\Type\NULL;
+use NoreSources\Container\Container;
 use NoreSources\MediaType\MediaTypeInterface;
 use Psr\Http\Message\UploadedFileInterface;
 
@@ -28,8 +26,10 @@ class UploadedFile implements UploadedFileInterface
 		$entry = $_FILES[$key];
 
 		return new UploadedFile(Container::keyValue($entry, 'tmp_file'),
-			Container::keyValue($entry, 'size'), Container::keyValue($entry, 'name'),
-			Container::keyValue($entry, 'type'), Container::keyValue($entry, 'error'));
+			Container::keyValue($entry, 'size'),
+			Container::keyValue($entry, 'name'),
+			Container::keyValue($entry, 'type'),
+			Container::keyValue($entry, 'error'));
 	}
 
 	public function getError()
@@ -69,12 +69,14 @@ class UploadedFile implements UploadedFileInterface
 			throw new UploadedFileException('File already moved');
 
 		if ($this->errorCode != UPLOAD_ERR_OK)
-			throw new UploadedFileException('Upload error', $this->errorCode);
+			throw new UploadedFileException('Upload error',
+				$this->errorCode);
 
 		if (!(\is_string($targetPath) && \strlen($targetPath)))
 			throw new \InvalidArgumentException('Invalid target');
 
-		if (!\is_uploaded_file($this->filePath) || (PHP_SAPI == 'cli') || (PHP_SAPI == 'phpdbg'))
+		if (!\is_uploaded_file($this->filePath) || (PHP_SAPI == 'cli') ||
+			(PHP_SAPI == 'phpdbg'))
 		{
 			$output = fopen($targetPath, 'wb+');
 			if ($output === false)
@@ -92,14 +94,15 @@ class UploadedFile implements UploadedFileInterface
 			$result = \move_uploaded_file($this->filePath, $targetPath);
 			if ($result === false)
 				throw new UploadedFileException(
-					'Failed to move ' . $this->filePath . ' to ' . $targetPath);
+					'Failed to move ' . $this->filePath . ' to ' .
+					$targetPath);
 		}
 
 		$this->flags |= self::MOVED;
 	}
 
-	public function __construct($path, $size = NULL, $name = null, $mediaType = NULL,
-		$error = UPLOAD_ERR_OK)
+	public function __construct($path, $size = NULL, $name = null,
+		$mediaType = NULL, $error = UPLOAD_ERR_OK)
 	{
 		$this->filePath = $path;
 		$this->fileSize = $size;

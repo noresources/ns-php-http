@@ -13,12 +13,13 @@ namespace NoreSources\Http;
 use Nette\PhpGenerator\Dumper;
 use Nette\PhpGenerator\Literal;
 use Nette\PhpGenerator\PhpFile;
-use NoreSources\TypeDescription;
 use NoreSources\Http\Header\AlternativeValueListInterface;
-use NoreSources\Http\Header\AlternativeValueListTrait;
 use NoreSources\Http\Header\HeaderValueFactory;
 use NoreSources\Http\Header\HeaderValueInterface;
 use NoreSources\Http\Header\TextHeaderValue;
+use NoreSources\Http\Header\Traits\AlternativeValueListTrait;
+use NoreSources\Http\Traits\QualityValueTrait;
+use NoreSources\Type\TypeDescription;
 require (__DIR__ . '/../vendor/autoload.php');
 
 $argv = $_SERVER['argv'];

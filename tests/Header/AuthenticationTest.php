@@ -1,16 +1,13 @@
 <?php
 /**
- * Copyright © 2012 - 2020 by Renaud Guillard (dev@nore.fr)
+ * Copyright © 2012 - 2021 by Renaud Guillard (dev@nore.fr)
  * Distributed under the terms of the MIT License, see LICENSE
- */
-
-/**
  *
  * @package HTTP
  */
 namespace NoreSources\Http;
 
-use NoreSources\Container;
+use NoreSources\Container\Container;
 use NoreSources\Http\Authentication\BasicCredentialData;
 use NoreSources\Http\Header\AuthorizationHeaderValue;
 use NoreSources\Http\Header\HeaderField;
@@ -55,7 +52,8 @@ final class AuthenticationTest extends \PHPUnit\Framework\TestCase
 			$error = '';
 			try
 			{
-				$value = HeaderValueFactory::fromKeyValue(HeaderField::AUTHORIZATION, $test->text);
+				$value = HeaderValueFactory::fromKeyValue(
+					HeaderField::AUTHORIZATION, $test->text);
 				$valid = true;
 			}
 			catch (InvalidHeaderException $e)
@@ -63,35 +61,46 @@ final class AuthenticationTest extends \PHPUnit\Framework\TestCase
 				$error = $e->getMessage();
 			}
 
-			$this->assertEquals($test->valid, $valid, $label . ' validity ' . $error);
+			$this->assertEquals($test->valid, $valid,
+				$label . ' validity ' . $error);
 			if (!$valid)
 				continue;
 
 			$data = $value->getCredentialData();
-			$this->assertInstanceOf(AuthorizationHeaderValue::class, $value);
+			$this->assertInstanceOf(AuthorizationHeaderValue::class,
+				$value);
 
-			$this->assertEquals($test->scheme, $value->getScheme(), 'Scheme');
+			$this->assertEquals($test->scheme, $value->getScheme(),
+				'Scheme');
 
 			if (\property_exists($test, 'dataClass'))
-				$this->assertInstanceOf($test->dataClass, $data, $label . 'data class');
+				$this->assertInstanceOf($test->dataClass, $data,
+					$label . 'data class');
 
 			if (\property_exists($test, 'data'))
 			{
-				if ($data instanceof BasicCredentialData && \is_array($test->data))
+				if ($data instanceof BasicCredentialData &&
+					\is_array($test->data))
 				{
-					$this->assertEquals(Container::keyValue($test->data, 'user'), $data->getUser(),
-						$label . ' user');
-					$this->assertEquals(Container::keyValue($test->data, 'password'),
+					$this->assertEquals(
+						Container::keyValue($test->data, 'user'),
+						$data->getUser(), $label . ' user');
+					$this->assertEquals(
+						Container::keyValue($test->data, 'password'),
 						$data->getPassword(), $label . ' password');
 				}
 
 				if (\is_string($test->data))
-					$this->assertEquals($test->data, \strval($data), 'String credential data');
-				elseif (\is_array($test->data) && $data instanceof ParameterMapProviderInterface)
+					$this->assertEquals($test->data, \strval($data),
+						'String credential data');
+				elseif (\is_array($test->data) &&
+					$data instanceof ParameterMapProviderInterface)
 				{
-					$this->assertInstanceOf(ParameterMapProviderInterface::class, $data);
+					$this->assertInstanceOf(
+						ParameterMapProviderInterface::class, $data);
 					$parameters = $data->getParameters();
-					$this->assertEquals($test->data, $parameters->getArrayCopy(),
+					$this->assertEquals($test->data,
+						$parameters->getArrayCopy(),
 						'Credential data (params)');
 				}
 			}

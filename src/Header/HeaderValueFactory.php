@@ -1,16 +1,13 @@
 <?php
 /**
- * Copyright © 2012 - 2020 by Renaud Guillard (dev@nore.fr)
+ * Copyright © 2012 - 2021 by Renaud Guillard (dev@nore.fr)
  * Distributed under the terms of the MIT License, see LICENSE
- */
-
-/**
  *
  * @package HTTP
  */
 namespace NoreSources\Http\Header;
 
-use NoreSources\Container;
+use NoreSources\Container\Container;
 use NoreSources\Http\RFC7230;
 use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\RequestInterface;
@@ -86,7 +83,7 @@ class HeaderValueFactory
 	 *
 	 * @param string $headerLine
 	 * @param boolean $returnKeyValue
-	 *        	If true, return an arraycontaining the header name and header value
+	 *        	If true, return an array containing the header name and header value
 	 * @throws InvalidHeaderException::
 	 * @return HeaderValueInterface|array The header value or an array [name, value] if
 	 *         $returnKeyValue is true
