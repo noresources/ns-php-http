@@ -11,6 +11,7 @@ use NoreSources\SingletonTrait;
 use NoreSources\Container\Container;
 use NoreSources\Http\QualityValueInterface;
 use NoreSources\Http\Coding\ContentCoding;
+use NoreSources\Http\Header\AcceptCharsetHeaderValue;
 use NoreSources\Http\Header\AcceptEncodingHeaderValue;
 use NoreSources\Http\Header\AcceptHeaderValue;
 use NoreSources\Http\Header\AcceptLanguageHeaderValue;
@@ -258,6 +259,115 @@ class ContentNegociator
 
 		asort($filtered);
 		return Container::firstKey(\array_reverse($filtered));
+	}
+
+	public function negociateCharset($accepted, $available)
+	{
+		$preferences = [];
+		$preferredCharset = null;
+		$preferredCharsetValue = 0;
+
+		$defaultValue = 0;
+		foreach ($accepted as $k => $a)
+		{
+			$charset = $a;
+			$q = 1;
+			if ($a instanceof AcceptCharsetHeaderValue)
+			{
+				$q = $a->getQualityValue();
+				$charset = $a->getCharset();
+			}
+			elseif (\is_string($k) && \is_numeric($a))
+			{
+				$q = $a;
+				$charset = $k;
+			}
+
+			if ($charset == AcceptCharsetHeaderValue::ANY)
+			{
+				$hasAny = true;
+				$defaultValue = $q;
+				continue;
+			}
+
+			if ($q > $preferredCharsetValue)
+			{
+				$preferredCharset = $charset;
+				$preferredCharsetValue = $q;
+			}
+
+			$key = \strtolower($charset);
+			$preferences[$key] = [
+				'charset' => $charset,
+				'q' => $q
+			];
+		}
+
+		$negociated = [];
+		foreach ($available as $a)
+		{
+			$ca = null;
+			if ($a instanceof MediaTypeInterface)
+				$ca = Container::keyValue($a->getParameters(), 'charset',
+					$preferredCharset);
+			else
+				$ca = TypeConversion::toString($a);
+
+			$ka = \strtolower($ca);
+
+			$qa = $defaultValue;
+			if (Container::keyExists($preferences, $ka))
+				$qa = $preferences[$ka]['q'];
+			if ($qa <= 0)
+				continue;
+
+			$negociated[] = [
+				'value' => $a,
+				'charset' => $ca,
+				'q' => $qa
+			];
+		}
+
+		Container::uasort($negociated,
+			function ($a, $b) {
+				$v = $b['q'] - $a['q'];
+				if ($v)
+					return $v;
+
+				$a = $a['value'];
+				$b = $b['value'];
+
+				if ($a instanceof MediaTypeInterface)
+				{
+					if (!($b instanceof MediaTypeInterface))
+						return -1;
+
+					$va = Container::keyExists($a->getParameters(),
+						'charset') ? 1 : 0;
+					$vb = Container::keyExists($b->getParameters(),
+						'charset') ? 1 : 0;
+
+					$v = $vb - $va;
+					if ($v)
+						return $v;
+				}
+				elseif ($b instanceof MediaTypeInterface)
+					return 1;
+				return 0;
+			});
+
+		$best = Container::firstValue($negociated);
+		$charset = $best['charset'];
+		$best = $best['value'];
+		if ($best instanceof MediaTypeInterface &&
+			!Container::keyExists($best->getParameters(), 'charset'))
+		{
+			$best = clone $best;
+			$p = $best->getParameters();
+			Container::setValue($p, 'charset', $charset);
+		}
+
+		return $best;
 	}
 
 	/**

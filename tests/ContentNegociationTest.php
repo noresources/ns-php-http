@@ -12,6 +12,8 @@ use NoreSources\Container\Container;
 use NoreSources\Http\Coding\ContentCoding;
 use NoreSources\Http\ContentNegociation\ContentNegociationException;
 use NoreSources\Http\ContentNegociation\ContentNegociator;
+use NoreSources\Http\Header\AcceptCharsetAlternativeValueList;
+use NoreSources\Http\Header\AcceptCharsetHeaderValue;
 use NoreSources\Http\Header\AcceptEncodingAlternativeValueList;
 use NoreSources\Http\Header\AcceptEncodingHeaderValue;
 use NoreSources\Http\Header\AcceptLanguageAlternativeValueList;
@@ -19,6 +21,8 @@ use NoreSources\Http\Header\AcceptLanguageHeaderValue;
 use NoreSources\Http\Header\HeaderField;
 use NoreSources\Http\Header\HeaderValueFactory;
 use NoreSources\Http\Header\InvalidHeaderException;
+use NoreSources\MediaType\MediaType;
+use NoreSources\MediaType\MediaTypeInterface;
 use NoreSources\Type\TypeConversion;
 
 final class ContentNegociationtTest extends \PHPUnit\Framework\TestCase
@@ -149,6 +153,144 @@ final class ContentNegociationtTest extends \PHPUnit\Framework\TestCase
 
 			$this->assertEquals($expected, $negociated,
 				$label . ' negociation result');
+		}
+	}
+
+	public function testCharset()
+	{
+		$tests = [
+			'bTF-8 only' => [
+				'line' => 'Accept-Charset: utf-8',
+				'accepted' => [
+					'utf-8' => 1
+				],
+				'available' => [
+					'text/html'
+				],
+				'expected' => 'text/html; charset=utf-8'
+			],
+			'Prefer MediaType with explicit charset' => [
+				'line' => 'Accept-Charset: utf-8',
+				'accepted' => [
+					'utf-8' => 1
+				],
+				'available' => [
+
+					'text/html',
+					'text/html; charset=ascii',
+					'text/xhtml; charset=utf-8'
+				],
+				'expected' => 'text/xhtml; charset=utf-8'
+			],
+			'Non-explicit charset qvalue' => [
+				'line' => 'Accept-Charset: utf-8; q=0.3, *; q=0.5',
+				'accepted' => [
+					'utf-8' => 0.3,
+					'*' => 0.5
+				],
+				'available' => [
+
+					'text/html; charset=ascii',
+					'text/xhtml; charset=utf-8'
+				],
+				'expected' => 'text/html; charset=ascii'
+			]
+		];
+
+		$negociator = ContentNegociator::getInstance();
+
+		foreach ($tests as $label => $test)
+		{
+			$line = $test['line'];
+			$accepted = Container::keyValue($test, 'accepted', []);
+			$expected = Container::keyValue($test, 'expected', null);
+			$error = Container::keyValue($test, 'error', null);
+
+			$headerValue = null;
+			try
+			{
+				$headerValue = HeaderValueFactory::fromHeaderLine($line);
+			}
+			catch (\Exception $e)
+			{
+				$headerValue = $e;
+			}
+
+			if ($error == InvalidHeaderException::class)
+			{
+				$this->assertInfinite($error, $headerValue,
+					$label . ' should failed to parse');
+				continue;
+			}
+
+			$this->assertInstanceOf(
+				AcceptCharsetAlternativeValueList::class, $headerValue,
+				$label . ' header value class' .
+				(($headerValue instanceof \Exception) ? ' (' .
+				$headerValue->getMessage() . ')' : ''));
+
+			/** @var AcceptCharsetAlternativeValueList $headerValue */
+			$this->assertCount(\count($accepted), $headerValue,
+				$label . ' alterative value');
+
+			$index = 0;
+			foreach ($accepted as $charset => $q)
+			{
+				/** @var AcceptCharsetHeaderValue $actual */
+				$actual = $headerValue->getAlternative($index);
+
+				$this->assertEquals($charset, $actual->getCharset(),
+					$label . ' charset #' . ($index + 1));
+				$this->assertEquals($q, $actual->getQualityValue(),
+					$label . ' quality value #' . ($index + 1));
+
+				$index++;
+			}
+
+			$a = Container::keyValue($test, 'available', []);
+			$available = [];
+			foreach ($a as $v)
+			{
+				$k = $v;
+
+				try
+				{
+					$mediaType = new MediaType('');
+					$mediaType->unserialize($v);
+
+					$this->assertEquals($v, $mediaType->serialize(),
+						$v . ' conversion to media type');
+
+					$v = $mediaType;
+					$k = $v->serialize();
+				}
+				catch (\Exception $e)
+				{}
+
+				$available[$k] = $v;
+			}
+
+			$negociated = $negociator->negociateCharset($accepted,
+				$available);
+
+			$serialized = $negociated;
+			if ($serialized instanceof MediaTypeInterface)
+				$serialized = $serialized->serialize();
+
+			if (Container::keyExists($test, 'expected'))
+			{
+				$expected = Container::keyValue($test, 'expected');
+				$this->assertEquals($expected, $serialized,
+					$label . ' negociation result');
+			}
+
+			foreach ($available as $original => $current)
+			{
+				$actual = ($current instanceof \Serializable) ? $current->serialize() : $current;
+				$this->assertEquals($original, $actual,
+					$label .
+					' available elements should not have been modified');
+			}
 		}
 	}
 
