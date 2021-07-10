@@ -8,6 +8,7 @@
 namespace NoreSources\Http;
 
 use Laminas\Diactoros\ServerRequestFactory;
+use Laminas\Diactoros\Request\Serializer;
 use NoreSources\Container\Container;
 use NoreSources\Http\Coding\ContentCoding;
 use NoreSources\Http\ContentNegociation\ContentNegociationException;
@@ -24,6 +25,7 @@ use NoreSources\Http\Header\InvalidHeaderException;
 use NoreSources\MediaType\MediaType;
 use NoreSources\MediaType\MediaTypeInterface;
 use NoreSources\Type\TypeConversion;
+use NoreSources\Type\TypeDescription;
 
 final class ContentNegociationtTest extends \PHPUnit\Framework\TestCase
 {
@@ -515,6 +517,147 @@ final class ContentNegociationtTest extends \PHPUnit\Framework\TestCase
 			$this->assertEquals($selection,
 				($negociated[HeaderField::CONTENT_TYPE])->serialize(),
 				$label . ' content-type negociation');
+		}
+	}
+
+	public function testNegociate()
+	{
+		$baseRequest = ServerRequestFactory::fromGlobals();
+		$serializer = new Serializer();
+		$negociator = ContentNegociator::getInstance();
+
+		$tests = [
+			'Nothing requested' => [
+				'headers' => [
+					'User-Agent' => 'NoreBrowser'
+				],
+				'availables' => [],
+				'negociated' => []
+			],
+			'Nothing from client' => [
+				'headers' => [
+					'User-Agent' => 'NoreBrowser'
+				],
+				'availables' => [
+					HeaderField::CONTENT_TYPE => [
+						'text/html',
+						'text/xhtml'
+					]
+				],
+				'expected' => [
+					HeaderField::CONTENT_TYPE => 'text/html'
+				]
+			],
+			'Nothing from server' => [
+				'headers' => [
+					'User-Agent' => 'NoreBrowser',
+					'accept-Language' => 'de',
+					'accEPT' => 'application/json'
+				],
+				'expected' => []
+			],
+			'Basic' => [
+				'headers' => [
+					'Accept' => 'text/plain; q=0.5, text/html, text/xhtml',
+					'accept-encoding' => 'gzip, *; q=0.5'
+				],
+				'availables' => [
+					HeaderField::CONTENT_TYPE => [
+						'application/json',
+						'text/plain',
+						'text/xhtml'
+					],
+					HeaderField::CONTENT_ENCODING => [
+						ContentCoding::DEFLATE,
+						ContentCoding::IDENTITY
+					],
+					HeaderField::CONTENT_LANGUAGE => [
+						'en',
+						'fr',
+						'de'
+					]
+				],
+				'expected' => [
+					HeaderField::CONTENT_TYPE => 'text/xhtml',
+					HeaderField::CONTENT_ENCODING => 'deflate',
+					HeaderField::CONTENT_LANGUAGE => 'en'
+				]
+			]
+		];
+
+		foreach ($tests as $label => $test)
+		{
+			$request = clone $baseRequest;
+			$headers = Container::keyValue($test, 'headers', []);
+			$availables = Container::keyValue($test, 'availables', []);
+			$expected = Container::keyValue($test, 'expected', []);
+			$error = Container::keyValue($test, 'error');
+
+			foreach ($headers as $header => $value)
+			{
+				$request = $request->withHeader($header, $value);
+			}
+
+			$label = $serializer->toString($request) . PHP_EOL . PHP_EOL .
+				$label . PHP_EOL;
+
+			$negociated = null;
+
+			$negociated = $negociator->negociate($request, $availables);
+			try
+			{}
+			catch (\Exception $e)
+			{
+				$negociated = $e;
+			}
+
+			if ($negociated instanceof \Exception)
+			{
+				$this->assertEquals('string',
+					TypeDescription::getName($error),
+					$label . 'Error (' . $e->getMessage() .
+					') is expected');
+
+				$this->assertInstanceOf($error, $negociated,
+					$label . 'Negociation should fail');
+				continue;
+			}
+
+			$this->assertEquals('array',
+				TypeDescription::getName($negociated),
+				$label . 'Negociation result type');
+
+			$this->assertCount(\count($expected), $negociated,
+				$label . 'Negociated element count');
+
+			/*
+			 * Convert negociation results for comparison
+			 */
+			$serialized = [];
+			foreach ($negociated as $header => $result)
+			{
+				;
+				if (\is_array($result))
+				{
+					foreach ($result as $k => $v)
+					{
+						if ($v instanceof \Serializable)
+							$serialized[$header][$k] = $v->serialize();
+						else
+							$serialized[$header][$k] = TypeConversion::toString(
+								$v);
+					}
+				}
+				else
+					if ($result instanceof \Serializable)
+						$serialized[$header] = $result->serialize();
+					else
+						$serialized[$header] = TypeConversion::toString(
+							$result);
+			}
+
+			$this->assertEquals($expected, $serialized,
+				$label . 'Negociation result');
 		}
 	}
 }

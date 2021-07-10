@@ -7,6 +7,7 @@
  */
 namespace NoreSources\Http\ContentNegociation;
 
+use NoreSources\Bitset;
 use NoreSources\SingletonTrait;
 use NoreSources\Container\Container;
 use NoreSources\Http\QualityValueInterface;
@@ -34,6 +35,29 @@ class ContentNegociator
 	use SingletonTrait;
 
 	/**
+	 * String mode negociation flags.
+	 *
+	 * Always honor the Accept[-*] header and raise ContentNegociationException
+	 * even if the receommanded behavior is to ignore the header on negociation failure.
+	 *
+	 * Applies to
+	 * <ul>
+	 * <li>Language negociation</li>
+	 * <li>Charset negotiation</li>
+	 * </ul>
+	 */
+	const STRICT = Bitset::BIT_01;
+
+	/**
+	 * Negociation flag.
+	 *
+	 * Negociation methods will return an array containing all
+	 * available entries that fullfil the Accept[-*] header conditions
+	 * instead of returning the best match only.
+	 */
+	const ALL_MATCH = Bitset::BIT_02;
+
+	/**
 	 *
 	 * @param RequestInterface $request
 	 * @param
@@ -41,7 +65,7 @@ class ContentNegociator
 	 * @return array<string, mixed>
 	 */
 	public function negociate(RequestInterface $request,
-		$availables = array())
+		$availables = array(), $flags = 0)
 	{
 		$negociated = [];
 
@@ -52,6 +76,7 @@ class ContentNegociator
 					$this,
 					'negociateContentType'
 				],
+				'flags' => $flags | self::ALL_MATCH,
 				'normalizer' => [
 					$this,
 					'normalizeMediaType'
@@ -77,13 +102,14 @@ class ContentNegociator
 		{
 			$responseHeaderField = $properties['field'];
 			$negociator = $properties['negociator'];
+			$negociationFlags = Container::keyValue($properties, 'flags',
+				$flags);
 			$normalizer = Container::keyValue($properties, 'normalizer',
 				[
-					TypeDescription::class,
+					TypeConversion::class,
 					'toString'
 				]);
-			$list = HeaderValueFactory::fromMessage($request,
-				$requestHeaderField);
+
 			$available = Container::keyValue($availables,
 				$responseHeaderField,
 				Container::keyValue($availables, $requestHeaderField,
@@ -92,6 +118,13 @@ class ContentNegociator
 			if ($available === null)
 				continue;
 
+			if (!\is_array($available))
+				$available = [
+					$available
+				];
+
+			$list = HeaderValueFactory::fromMessage($request,
+				$requestHeaderField);
 			if (!Container::isTraversable($available))
 				$available = [
 					$available
@@ -102,14 +135,41 @@ class ContentNegociator
 					return \call_user_func($normalizer, $v);
 				});
 
+			$result = null;
 			if ($list instanceof AlternativeValueListInterface)
 			{
-				$negociated[$responseHeaderField] = \call_user_func(
-					$negociator, $list, $available, $requestHeaderField);
+				$result = \call_user_func($negociator, $list, $available,
+					$negociationFlags, $requestHeaderField);
 			}
+			elseif ($negociationFlags & self::ALL_MATCH)
+				$result = $available;
 			else
-				$negociated[$responseHeaderField] = Container::firstValue(
+				$result = Container::firstValue($available);
+
+			$negociated[$responseHeaderField] = $result;
+		}
+
+		/*
+		 * CAccept-Charset special case. Act a a supplementary filter
+		 * on Content-Type
+		 */
+
+		$list = HeaderValueFactory::fromMessage($request,
+			HeaderField::ACCEPT_CHARSET);
+
+		if (($available = Container::keyValue($negociated,
+			HeaderField::CONTENT_TYPE)))
+		{
+			if ($list instanceof AlternativeValueListInterface)
+			{
+				$negociated[HeaderField::CONTENT_TYPE] = $this->negociateCharset(
+					$list, $available, $flags);
+			}
+			elseif (($flags & self::ALL_MATCH) == 0)
+			{
+				$negociated[HeaderField::CONTENT_TYPE] = Container::firstValue(
 					$available);
+			}
 		}
 
 		return $negociated;
@@ -123,8 +183,13 @@ class ContentNegociator
 	 *        	List of available media type
 	 * @return MediaTypeInterface
 	 */
-	public function negociateContentType($accepted, $available)
+	public function negociateContentType($accepted, $available,
+		$flags = 0)
 	{
+		if (!\is_array($available))
+			$available = [
+				$available
+			];
 		$qvalues = [];
 		$filtered = [];
 
@@ -157,6 +222,9 @@ class ContentNegociator
 				return ($a > $b) ? -1 : 1;
 			});
 
+		if ($flags & self::ALL_MATCH)
+			return $filtered;
+
 		return Container::firstValue($filtered);
 	}
 
@@ -176,8 +244,12 @@ class ContentNegociator
 	 * @return string|mixed|array|unknown[]|\Iterator[]|mixed[]|NULL[]|array[]|\ArrayAccess[]|\Psr\Container\ContainerInterface[]|\Traversable[]
 	 * @see https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.4
 	 */
-	public function negociateEncoding($accepted, $available)
+	public function negociateEncoding($accepted, $available, $flags = 0)
 	{
+		if (!\is_array($available))
+			$available = [
+				$available
+			];
 		$hasAny = false;
 		$explicitelyAccepted = Container::map($accepted,
 			function ($k, $a) use (&$hasAny) {
@@ -257,12 +329,20 @@ class ContentNegociator
 			throw new ContentNegociationException(
 				HeaderField::CONTENT_ENCODING);
 
-		asort($filtered);
+		Container::asort($filtered);
+
+		if ($flags & self::ALL_MATCH)
+			return \array_keys(\array_reverse($filtered));
+
 		return Container::firstKey(\array_reverse($filtered));
 	}
 
-	public function negociateCharset($accepted, $available)
+	public function negociateCharset($accepted, $available, $flags = 0)
 	{
+		if (!\is_array($available))
+			$available = [
+				$available
+			];
 		$preferences = [];
 		$preferredCharset = null;
 		$preferredCharsetValue = 0;
@@ -356,16 +436,21 @@ class ContentNegociator
 				return 0;
 			});
 
+		if ($flags & self::ALL_MATCH)
+		{
+			$list = [];
+			foreach ($negociated as $entry)
+			{
+				$list[] = $this->appendCharset($entry['value'],
+					$entry['charset']);
+			}
+			return $list;
+		}
+
 		$best = Container::firstValue($negociated);
 		$charset = $best['charset'];
 		$best = $best['value'];
-		if ($best instanceof MediaTypeInterface &&
-			!Container::keyExists($best->getParameters(), 'charset'))
-		{
-			$best = clone $best;
-			$p = $best->getParameters();
-			Container::setValue($p, 'charset', $charset);
-		}
+		$best = $this->appendCharset($best, $charset);
 
 		return $best;
 	}
@@ -379,8 +464,12 @@ class ContentNegociator
 	 * @throws ContentNegociationException
 	 * @return mixed
 	 */
-	public function negociateLanguage($accepted, $available)
+	public function negociateLanguage($accepted, $available, $flags = 0)
 	{
+		if (!\is_array($available))
+			$available = [
+				$available
+			];
 		$preferences = [];
 
 		$defaultValue = 1;
@@ -461,6 +550,10 @@ class ContentNegociator
 		 *
 		 * @see https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.5
 		 */
+
+		if ($flags & self::ALL_MATCH)
+			return $available;
+
 		return Container::firstValue($available);
 	}
 
@@ -576,5 +669,19 @@ class ContentNegociator
 		}
 
 		throw new \InvalidArgumentException('Invalid input');
+	}
+
+	protected function appendCharset($entry, $charset)
+	{
+		if (!($entry instanceof MediaTypeInterface &&
+			!$entry->getParameters()->has('charset')))
+			return $entry;
+
+		/** @var MediaTypeInterface $entry */
+		$entry = clone $entry;
+		$p = $entry->getParameters();
+		Container::setValue($p, 'charset', $charset);
+
+		return $entry;
 	}
 }
