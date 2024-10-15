@@ -20,6 +20,7 @@ use NoreSources\Http\Header\AcceptEncodingAlternativeValueList;
 use NoreSources\Http\Header\AcceptEncodingHeaderValue;
 use NoreSources\Http\Header\AcceptLanguageAlternativeValueList;
 use NoreSources\Http\Header\AcceptLanguageHeaderValue;
+use NoreSources\Http\Header\ContentTypeHeaderValue;
 use NoreSources\Http\Header\HeaderField;
 use NoreSources\Http\Header\HeaderValueFactory;
 use NoreSources\Http\Header\InvalidHeaderException;
@@ -462,17 +463,17 @@ final class ContentNegociationTest extends \PHPUnit\Framework\TestCase
 			'strict' => [
 				'accept' => 'application/json',
 				'availableMediaTypes' => [
-					'application/json' => 1,
 					'application/json; charset="utf-8"' => 1,
+					'application/json' => 1,
 					'foo/bar' => -1
 				]
 			],
-			'untitle test' => [
+			'Non-maching parameters' => [
 				'accept' => 'application/json; style=pretty' .
 				', */*;q=0.1',
 				'availableMediaTypes' => [
-					'application/json' => 1,
 					'application/json; charset="utf-8"' => 1,
+					'application/json' => 1,
 					'foo/bar' => 0.1
 				]
 			]
@@ -490,6 +491,10 @@ final class ContentNegociationTest extends \PHPUnit\Framework\TestCase
 			$selectionQuality = -1;
 			foreach ($test->availableMediaTypes as $mediaTypeString => $expectedQualityValue)
 			{
+				/**
+				 *
+				 * @var ContentTypeHeaderValue $contentType
+				 */
 				$contentType = HeaderValueFactory::createFromKeyValue(
 					HeaderField::CONTENT_TYPE, $mediaTypeString);
 				$qualityValue = $negociator->getContentTypeQualityValue(
@@ -501,7 +506,7 @@ final class ContentNegociationTest extends \PHPUnit\Framework\TestCase
 				if ($qualityValue > $selectionQuality)
 				{
 					$selectionQuality = $qualityValue;
-					$selection = $contentType;
+					$selection = $contentType->getMediaType();
 				}
 			}
 
@@ -512,15 +517,20 @@ final class ContentNegociationTest extends \PHPUnit\Framework\TestCase
 
 			$negociated = $negociator->negociate($request,
 				[
-					HeaderField::ACCEPT => \array_keys(
+					HeaderField::CONTENT_TYPE => \array_keys(
 						$test->availableMediaTypes)
 				]);
 
 			$this->assertArrayHasKey(HeaderField::CONTENT_TYPE,
 				$negociated);
 
-			$this->assertEquals($selection,
-				($negociated[HeaderField::CONTENT_TYPE])->jsonSerialize(),
+			$actual = $negociated[HeaderField::CONTENT_TYPE];
+
+			$this->assertInstanceOf(MediaTypeInterface::class, $actual,
+				$label);
+
+			$this->assertEquals($selection->serializeToString(),
+				$actual->serializeToString(),
 				$label . ' content-type negociation');
 		}
 	}

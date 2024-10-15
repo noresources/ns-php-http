@@ -8,6 +8,7 @@
 namespace NoreSources\Http\ContentNegociation;
 
 use NoreSources\Bitset;
+use NoreSources\NotComparableException;
 use NoreSources\SingletonTrait;
 use NoreSources\Container\Container;
 use NoreSources\Http\QualityValueInterface;
@@ -267,12 +268,29 @@ class ContentNegociator
 				HeaderField::CONTENT_TYPE);
 
 		Container::uksort($filtered,
-			function ($a, $b) use ($qvalues) {
-				$a = $qvalues[$a];
-				$b = $qvalues[$b];
-				if ($a == $b)
+			function ($a, $b) use ($qvalues, $filtered) {
+				$qa = $qvalues[$a];
+				$qb = $qvalues[$b];
+				if ($qa != $qb)
+					return (\intval($qb * 100)) - (\intval($qa * 100));
+
+				$ma = $filtered[$a];
+				$mb = $filtered[$b];
+				try
+				{
+					$c = $mb->compare($ma);
+					if ($c != 0)
+						return $c;
+				}
+				catch (NotComparableException $e)
+				{
 					return 0;
-				return ($a > $b) ? -1 : 1;
+				}
+
+				$ca = $ma->getParameters()->count();
+				$cb = $mb->getParameters()->count();
+
+				return ($cb - $ca);
 			});
 
 		if ($flags & self::ALL_MATCH)
@@ -299,10 +317,9 @@ class ContentNegociator
 	 */
 	public function negociateEncoding($accepted, $available, $flags = 0)
 	{
-		if (!\is_array($available))
-			$available = [
-				$available
-			];
+		if (!Container::isTraversable($available))
+			throw new \InvalidArgumentException(
+				'Available media types argument is not traversable.');
 		$hasAny = false;
 		$explicitelyAccepted = Container::map($accepted,
 			function ($k, $a) use (&$hasAny) {
