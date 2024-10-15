@@ -56,7 +56,7 @@ class SerializationManagerResponsePopulatorTest extends \PHPUnit\Framework\TestC
 				]
 			],
 			'text-art' => [
-				'accept' => 'text/vnd.ascii-art; charset=ascii; max-row-length=80; not=supported',
+				'accept' => 'text/vnd.ascii-art; charset=us-ascii; max-row-length=80; not=supported',
 				'acceptParameters' => [
 					'charset',
 					'max-row-length'

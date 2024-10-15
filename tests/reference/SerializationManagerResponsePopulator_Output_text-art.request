@@ -1,2 +1,2 @@
 GET / HTTP/1.1
-Accept: text/vnd.ascii-art; charset=ascii; max-row-length=80; not=supported
+Accept: text/vnd.ascii-art; charset=us-ascii; max-row-length=80; not=supported

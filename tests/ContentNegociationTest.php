@@ -180,7 +180,7 @@ final class ContentNegociationTest extends \PHPUnit\Framework\TestCase
 				'available' => [
 
 					'text/html',
-					'text/html; charset=ascii',
+					'text/html; charset=us-ascii',
 					'text/xhtml; charset=utf-8'
 				],
 				'expected' => 'text/xhtml; charset=utf-8'
@@ -193,10 +193,10 @@ final class ContentNegociationTest extends \PHPUnit\Framework\TestCase
 				],
 				'available' => [
 
-					'text/html; charset=ascii',
+					'text/html; charset=us-ascii',
 					'text/xhtml; charset=utf-8'
 				],
-				'expected' => 'text/html; charset=ascii'
+				'expected' => 'text/html; charset=us-ascii'
 			]
 		];
 

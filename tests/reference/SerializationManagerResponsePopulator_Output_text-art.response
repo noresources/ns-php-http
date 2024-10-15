@@ -1,6 +1,6 @@
 HTTP/1.1 200 OK
 Vary: Accept
-Content-Type: text/vnd.ascii-art; charset=ascii; max-row-length=80
+Content-Type: text/vnd.ascii-art; charset=us-ascii; max-row-length=80
 
 /---------+------------+----------\
 |         | type       | format   |
